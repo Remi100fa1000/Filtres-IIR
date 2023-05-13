@@ -1,2 +1,2 @@
 # Filtres-IIR
-Quelques notes sur l'implémentation numérique des filtres IIR
+Dans ce dépôt, on décrit des filtres IIR dont l'implémentation est peu couteuse.
