@@ -1,0 +1,150 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{graphicx}
+
+\usepackage{stmaryrd}
+
+\begin{document}
+\title{Filtres numériques à réponse impulsionnelle infinie (IIR) simples à implémenter}
+\author{Remi100fa1000}
+
+\maketitle
+
+\section{Objectif}
+
+On s'intéresse aux filtres à réponse impulsionnelle infinie (IIR de l'anglais Infinite Impulse Response). On cherche des filtres simples à implémenter sur FPGA.
+
+\section{Filtres d'ordre 1}
+
+Commençons par les filtres d'ordre 1 dont la réponse dans le domaine de Laplace s'écrit :
+
+\begin{equation}
+H(p) = \frac{1}{1+\frac{p}{2\pi f_c}}.
+\end{equation}
+
+Dans cette équation, $f_c$ est la fréquence de coupure du filtre.
+
+Pour obtenir la représentation numérique de ce filtre, on utilise la transformée bilinéaire du plan :
+
+\begin{equation}
+p \approx 2f_e \frac{1-z^{-1}}{1+z^{-1}}.
+\end{equation}
+
+Où $f_e$ est la fréquence d'échantillonnage. On obtient alors :
+
+\begin{equation}
+H(z) = \frac{1+z^{-1}}{1+z^{-1}+\frac{f_e}{\pi f_c}(1-z^{-1})}.
+\end{equation}
+
+On a alors :
+
+\begin{equation}
+y(z)(1+\frac{f_e}{\pi f_c})+y(z)z^{-1}(1-\frac{f_e}{\pi f_c})= (1+z^{-1})x(z).
+\end{equation}
+
+On peut ensuite passer dans le domaine temporel pour avoir l'expression du filtre :
+
+\begin{equation}
+y(n)(1+\frac{f_e}{\pi f_c})=y(n-1)(\frac{f_e}{\pi f_c}-1)+x(n)+x(n-1).
+\end{equation}
+
+En choisissant $\frac{f_e}{\pi f_c}=2^{N}-1$ ($N>1$), on obtient l'expression suivante :
+
+\begin{equation}
+y(n)2^N=y(n-1)(2^N-2)+x(n)+x(n-1).
+\end{equation}
+
+On peut donc calculer la valeur de $y(n)$ avec la formule :
+
+\begin{equation}
+y(n)=y(n-1)-\frac{y(n-1)}{2^{N-1}}+\frac{(x(n)+x(n-1))}{2^N}.
+\end{equation}
+
+Ce filtre est simple à calculer sur FPGA car il n'utilise que des divisions par des puissances de $2$ (décalage à droite des données binaires).
+
+\section{Filtres d'ordre 2}
+
+On cherche maintenant à trouver l'expression de filtres d'ordre 2 qui sont eux aussi simples à implémenter.
+
+L'expression générale d'un filtre d'ordre 2 de pulsation propre $\omega_0$ a pour expression dans le domaine de Lapalce :
+
+\begin{equation}
+H(p) = \frac{1}{1+\frac{p}{\omega_0 Q}+\frac{p^2}{\omega_0^2}}.
+\end{equation}
+
+En utilisant la transformée bilinéaire du plan, on se retrouve avec l'expression :
+
+\begin{equation}
+H(z) = \frac{(1+z^{-1})^2}{\left(1+\frac{\alpha}{Q}+\alpha^2 \right)+\left(2-2\alpha^2 \right)z^{-1}+\left(1+\frac{\alpha}{Q}-\alpha^2 \right)z^{-2}},
+\end{equation}
+
+dans cette équation $\alpha=\frac{2f_e}{\omega_0}=\frac{f_e}{\pi f_c}$.
+
+On peut alors obtenir l'expression du filtre en z dans le domaine temporel :
+
+\begin{multline}
+y(n)\left(1+\frac{\alpha}{Q}+\alpha^2 \right)+2y(n-1)\left(1-\alpha^2 \right)+y(n-2)\left(1+\frac{\alpha}{Q}-\alpha^2 \right) \\
+ = x(n)-x(n-2).
+\end{multline}
+
+On a trois coefficients dans ce filtre :
+
+\begin{equation}
+1+\frac{\alpha}{Q}+\alpha^2,
+\end{equation}
+\begin{equation}
+1-\alpha^2,
+\end{equation}
+\begin{equation}
+1-\frac{\alpha}{Q}+\alpha^2.
+\end{equation}
+
+On remarque assez rapidement le cas où $Q=\frac{1}{2}$, dans ce cas là, les équations précédentes deviennent :
+
+\begin{equation}
+(1+\alpha)^2,
+\end{equation}
+\begin{equation}
+(1+\alpha)(1-\alpha),
+\end{equation}
+\begin{equation}
+(1-\alpha)^2.
+\end{equation}
+
+En choisissant $\alpha=2^N-1$, on obtient les coefficients : $2^{2N}$, $2^{N+1}-2^{2N}$ et $2^{2N}-2^{N+2}+4$.
+
+Dans ce cas là, on obtient un filtre dont les coefficients s'écrivent simplement comme des somme de puissances de 2 : 
+
+\begin{multline}
+y(n)2^{2N}+2y(n-1)(2^{N+1}-2^{2N})+y(n-2)(2^{2N}-2^{N+2}+4)
+\\=x(n)+2x(n-1)+x(n-2).
+\end{multline}
+
+On a ainsi un filtre IIR d'ordre 2 dont l'implémentation numérique utilise peu de ressources.
+
+On peut noter que la fonction de transfert de ce filtre est exactement le carré de la fonction de transfert du filtre d'ordre 1 présenté dans la section précédente. En effet, cette fonction de transfert peut s'écrire :
+
+\begin{equation}
+H(z) = \left[ \frac{(1+z^{-1})}{(2^{N})+z^{-1}(2-2^{N})} \right]^2. 
+\end{equation}
+
+\section{Généralisation à l'ordre N}
+
+On peut obtenir un filtre d'ordre N relativement simple à implémenter à partir des résultats obtenus précédemment. Bien entendu, les ressources requises pour ces filtres sont plus importantes que pour les filtres d'ordre 1 et 2 explicités ci-dessus.
+
+Le filtre de fonction transfert 
+
+\begin{equation}
+H(z) = \left[ \frac{(1+z^{-1})}{(2^{N})+z^{-1}(1-\alpha)} \right]^K, 
+\end{equation}
+
+est un filtre d'ordre $K$ dont l'implémentation ne requiert que des multiplications par des entiers (coefficients binomiaux ou produit de coefficients binomiaux et de puissance de $2$) et une division finale par une puissance de $2$.
+
+\end{document}
