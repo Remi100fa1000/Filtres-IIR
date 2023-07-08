@@ -71,6 +71,8 @@ Ce filtre est simple à calculer sur FPGA car il n'utilise que des divisions par
 
 \section{Filtres d'ordre 2}
 
+\subsection{Développements préliminaires}
+
 On cherche maintenant à trouver l'expression de filtres d'ordre 2 qui sont eux aussi simples à implémenter.
 
 L'expression générale d'un filtre d'ordre 2 de pulsation propre $\omega_0$ a pour expression dans le domaine de Lapalce :
@@ -106,6 +108,8 @@ On a trois coefficients dans ce filtre :
 1-\frac{\alpha}{Q}+\alpha^2.
 \end{equation}
 
+\subsection{Un cas particulier}
+
 On remarque assez rapidement le cas où $Q=\frac{1}{2}$, dans ce cas là, les équations précédentes deviennent :
 
 \begin{equation}
@@ -135,7 +139,7 @@ On peut noter que la fonction de transfert de ce filtre est exactement le carré
 H(z) = \left[ \frac{(1+z^{-1})}{(2^{N})+z^{-1}(2-2^{N})} \right]^2. 
 \end{equation}
 
-\section{Généralisation à l'ordre N}
+\subsection{Généralisation du cas particulier à l'ordre N}
 
 On peut obtenir un filtre d'ordre N relativement simple à implémenter à partir des résultats obtenus précédemment. Bien entendu, les ressources requises pour ces filtres sont plus importantes que pour les filtres d'ordre 1 et 2 explicités ci-dessus.
 
@@ -146,5 +150,42 @@ H(z) = \left[ \frac{(1+z^{-1})}{(2^{N})+z^{-1}(1-\alpha)} \right]^K,
 \end{equation}
 
 est un filtre d'ordre $K$ dont l'implémentation ne requiert que des multiplications par des entiers (coefficients binomiaux ou produit de coefficients binomiaux et de puissance de $2$) et une division finale par une puissance de $2$.
+
+\subsection{Cas plus général pour $N=2$}
+
+Le cas particulier présenté ci-dessus ne permet de réaliser qu'un nombre limité de filtres.
+
+Pour qu'un filtre d'ordre $2$ soit simple à implémenter il suffit que:
+
+\begin{itemize}
+\item tous les coefficients du filtre soit des entiers;
+\item le terme de degré zero du dénominateur soit égal à $2^N$.
+\end{itemize}
+
+La deuxième condition s'écrit :
+
+\begin{equation}
+Q = \frac{\alpha}{2^N - \alpha^2-1}.
+\end{equation}
+
+Tout d'abord, avec $Q$ sous cette forme
+
+\begin{equation}
+1-\frac{\alpha}{Q}+\alpha^2=2+2\alpha^2-2^N.
+\end{equation}
+
+Cette dernière équation nous permet de conclure que si $\alpha^2$ est entier, tous les coefficients du filtre seront entiers. 
+
+Ensuite, une étude de la dérivée de $Q$ par rapport à $\alpha$ pour $\alpha\geq 0$ montre que cette fonction est strictement croissante sur $[0:\sqrt{2^N-1}[ \rightarrow  \mathbb{R}^+$.
+
+Ces deux analyses nous permettent de conclure que pour construire un filtre d'odre 2 relativement simple à implémenter. Il suffit de :
+\begin{itemize}
+\item choisir une valeur de $N$;
+\item choisir un $\alpha<\sqrt{2^N-1}$ de sorte que $\alpha^2$ soit entier;
+\item calculer les coefficients du filtre avec $Q = \frac{\alpha}{2^N - \alpha^2-1}$.
+\end{itemize}
+
+
+
 
 \end{document}
